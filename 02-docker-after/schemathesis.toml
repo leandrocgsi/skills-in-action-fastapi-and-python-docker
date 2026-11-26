@@ -1,0 +1,44 @@
+# Property-based API testing against the running API.
+#   API_TOKEN=$(curl -s localhost:8000/auth/signin -H 'Content-Type: application/json' \
+#     -d '{"username":"leandro","password":"admin123"}' | jq -r .accessToken) \
+#   uvx schemathesis run http://localhost:8000/v3/api-docs
+headers = { Authorization = "Bearer ${API_TOKEN}" }
+
+[generation]
+max-examples = 50
+
+[checks]
+# Deliberate leniency shared with the original API: unknown query parameters are ignored and
+# scalars are coerced (`enabled: 0`, `"true"`), because XML and YAML bodies carry text.
+negative_data_rejection.enabled = false
+# PATCH /api/person/v1/exportPage matches /{person_id} and answers 400 (not a number), as before.
+unsupported_method.enabled = false
+
+# The Authorization header of the refresh endpoint is a plain header: missing means 400.
+[[operations]]
+include-name = "PUT /auth/refresh/{username}"
+checks.missing_required_header.enabled = false
+
+# `to` is a `;`-separated list validated as e-mail addresses, which the schema cannot express.
+[[operations]]
+include-name = "POST /api/email/v1"
+checks.positive_data_acceptance.enabled = false
+
+[[operations]]
+include-name = "POST /api/email/v1/withAttachment"
+checks.positive_data_acceptance.enabled = false
+
+# An empty file is a business error ("Please set a Valid File!"), not a schema one.
+[[operations]]
+include-name = "POST /api/person/v1/massCreation"
+checks.positive_data_acceptance.enabled = false
+
+# /exportPage and /massCreation also match /{person_id}, so the 405 lists that route's methods,
+# exactly as the original API does.
+[[operations]]
+include-path = "/api/person/v1/exportPage"
+checks.allow_header_conformance.enabled = false
+
+[[operations]]
+include-path = "/api/person/v1/massCreation"
+checks.allow_header_conformance.enabled = false
