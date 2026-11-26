@@ -1,0 +1,97 @@
+[project]
+name = "erudio"
+version = "0.1.0"
+description = "Erudio REST API (People, Books, Auth, Files and e-Mail) with FastAPI"
+requires-python = ">=3.14"
+dependencies = [
+    "fastapi~=0.141.1",
+    "uvicorn[standard]>=0.53",
+    "pydantic>=2.13",
+    "pydantic-settings>=2.15",
+    "sqlalchemy[asyncio]>=2.0.54",
+    "asyncmy>=0.2.15",
+    "cryptography>=50",
+    "pyyaml>=6.0.3",
+    "defusedxml>=0.7.1",
+    "pyjwt>=2.14.0",
+    "openpyxl>=3.1.5",
+    "aiosmtplib>=5.1.3",
+    "python-multipart>=0.0.32",
+    "email-validator>=2.3.0",
+    "argon2-cffi>=25.1.0",
+    "boto3>=1.40",
+]
+
+[dependency-groups]
+migrations = [
+    "alembic>=1.20",
+    "sqlparse>=0.6",
+]
+dev = [
+    "pytest>=9.1",
+    "pytest-asyncio>=1.4",
+    "pytest-cov>=7.1",
+    "httpx>=0.28",
+    "testcontainers[mysql,localstack]>=4.15",
+    "pymysql>=1.2",
+    "ruff>=0.16",
+    "mypy>=2.3",
+    "types-pyyaml",
+    "pre-commit>=4.6",
+    "types-defusedxml>=0.7.0.20260504",
+    "aiosmtpd>=1.4.6",
+    "types-openpyxl>=3.1.5.20260827",
+    "types-boto3[s3]>=1.40",
+]
+
+[tool.uv]
+default-groups = ["dev", "migrations"]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/erudio"]
+
+[tool.ruff]
+line-length = 100
+src = ["src", "tests"]
+target-version = "py314"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "SIM", "ASYNC", "S", "RUF", "PL", "C4", "PT"]
+ignore = ["PLR2004", "PLR0913", "PLR0917", "RUF012"]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**" = ["S101", "S105", "S106", "S107", "PLR0912", "PLR0915"]
+"migrations/**" = ["S608"]
+
+[tool.mypy]
+strict = true
+plugins = ["pydantic.mypy"]
+mypy_path = "src"
+files = ["src", "tests", "migrations"]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "session"
+asyncio_default_test_loop_scope = "session"
+testpaths = ["tests"]
+addopts = "-ra"
+filterwarnings = [
+    "ignore:Workbook contains no default style:UserWarning",
+]
+markers = [
+    "integration: needs Docker (MySQL through Testcontainers)",
+]
+
+[tool.coverage.run]
+branch = true
+source = ["src/erudio"]
+
+[tool.coverage.report]
+fail_under = 90
+show_missing = true
+skip_covered = true
+exclude_also = ["if TYPE_CHECKING:"]
